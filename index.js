@@ -1,7 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const app = express();
 const port = process.env.PORT || 5000;
 
@@ -31,10 +31,26 @@ async function run() {
       const result = await blogCollection.insertOne(blogsData);
       res.send(result);
     });
+    // For get Blogs
     app.get("/blogs", async (req, res) => {
-        const result = await blogCollection.find().toArray()
-        res.send(result)
-      });
+      const result = await blogCollection.find().toArray();
+      res.send(result);
+    });
+    // for single one
+    app.get("/blogs/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      console.log(filter);
+      const result = await blogCollection.findOne(filter);
+      res.send(result);
+    });
+    // for single one delete
+    app.delete("/blogs/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await blogCollection.deleteOne(query);
+      res.send(result);
+    });
 
     await client.connect();
     await client.db("admin").command({ ping: 1 });
