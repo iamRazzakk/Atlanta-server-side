@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const jwt = require("jsonwebtoken");
 require("dotenv").config();
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const app = express();
@@ -24,6 +25,16 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     const blogCollection = client.db("AtlantaDB").collection("blogs");
+    const commentCollection = client.db("AtlantaDB").collection("comments");
+
+    // user auth related api
+    app.post("/jwt", async (req, res) => {
+      const loginUser = req.body;
+      const token = jwt.sign(loginUser, process.env.JWT_TOKEN, {
+        expiresIn: "1h",
+      });
+      res.send({ token });
+    });
 
     // For Post Data
     app.post("/blogs", async (req, res) => {
@@ -40,7 +51,7 @@ async function run() {
     app.get("/blogs/:id", async (req, res) => {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
-      console.log(filter);
+      // console.log(filter);
       const result = await blogCollection.findOne(filter);
       res.send(result);
     });
@@ -49,6 +60,17 @@ async function run() {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const result = await blogCollection.deleteOne(query);
+      res.send(result);
+    });
+    // for update
+    // for comment
+    app.post("/comments", async (req, res) => {
+      const commentData = req.body;
+      const result = await commentCollection.insertOne(commentData);
+      res.send(result);
+    });
+    app.get("/comments", async (req, res) => {
+      const result = await commentCollection.find().toArray();
       res.send(result);
     });
 
