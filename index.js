@@ -25,6 +25,7 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     const blogCollection = client.db("AtlantaDB").collection("blogs");
+    // const usersCollection = client.db("AtlantaDB").collection("users");
     const commentCollection = client.db("AtlantaDB").collection("comments");
 
     // user auth related api
@@ -34,6 +35,48 @@ async function run() {
         expiresIn: "1h",
       });
       res.send({ token });
+    });
+
+    // for user
+    app.post("/user", (req, res) => {
+      const userData = req.body;
+
+      const db = client.db("AtlantaDB");
+      const collection = db.collection("users");
+
+      collection.insertOne(userData, (error, result) => {
+        if (error) {
+          console.error(error);
+          return res
+            .status(500)
+            .json({ success: false, message: "Internal Server Error" });
+        }
+
+        res
+          .status(201)
+          .json({
+            success: true,
+            message: "User registered successfully",
+            data: result.ops[0],
+          });
+      });
+    });
+
+    // Get all users
+    app.get("/user", (req, res) => {
+      const db = client.db("AtlantaDB");
+      const collection = db.collection("users");
+
+      collection.find().toArray((error, result) => {
+        if (error) {
+          console.error(error);
+          return res
+            .status(500)
+            .json({ success: false, message: "Internal Server Error" });
+        }
+
+        res.status(200).json({ success: true, data: result });
+      });
     });
 
     // For Post Data
@@ -63,6 +106,22 @@ async function run() {
       res.send(result);
     });
     // for update
+    app.put("/blogs/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const updateBlogs = req.body;
+      const updateDoc = {
+        $set: {
+          name: updateBlogs.name,
+          Category: updateBlogs.Category,
+          details: updateBlogs.details,
+          data: updateBlogs.data,
+        },
+      };
+      const result = await blogCollection.updateOne(filter, updateDoc);
+      res.send(result);
+    });
+
     // for comment
     app.post("/comments", async (req, res) => {
       const commentData = req.body;
